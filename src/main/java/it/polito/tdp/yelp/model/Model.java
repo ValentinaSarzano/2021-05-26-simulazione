@@ -1,5 +1,6 @@
 package it.polito.tdp.yelp.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,9 @@ public class Model {
 	private YelpDao dao;
 	private Graph<Business, DefaultWeightedEdge> grafo;
 	private Map<String, Business> idMap;
+	private List<Business> vertici;
 	
+	private List<Business> best;
 	
 
 	public Model( ) {
@@ -36,6 +39,7 @@ public class Model {
 	    this.idMap = new HashMap<>();
 	    
 	    this.dao.getVertici(city, anno, idMap);
+	    this.vertici = new ArrayList<>(idMap.values());
 	    
 	    //Aggiunta vertici
 	    Graphs.addAllVertices(this.grafo, idMap.values());
@@ -90,7 +94,6 @@ public class Model {
 	}
 
 
-
 	public boolean grafoCreato() {
 
 		if(this.grafo == null)
@@ -99,4 +102,54 @@ public class Model {
 			return true;
 	}
 	
+	//Ricerca PERCORSO MIGLIORE
+	public List<Business> trovaPercorso(Business partenza, Business arrivo, double x) {
+		this.best = new ArrayList<>();
+		
+		List<Business> parziale = new ArrayList<>();
+		
+		parziale.add(partenza);
+		
+		cerca(parziale, 1, arrivo, x);
+		
+		return best;
+		
+	}
+
+
+
+	private void cerca(List<Business> parziale, int livello, Business arrivo, double x) {
+		
+		
+		
+		//Finiamo quando l'ultimo business è il migliore trovato al punto precedente
+		Business ultimo = parziale.get(parziale.size()-1);
+		if(ultimo.equals(arrivo)) {
+			if(this.best == null) {
+				this.best = new ArrayList<>(parziale);
+				return;
+			}else if(parziale.size() < best.size()) {
+				this.best = new ArrayList<>(parziale);
+				return;
+			} else
+				return;
+		}
+		
+		
+		for(Business b: Graphs.successorListOf(this.grafo, ultimo)) {
+			if(this.grafo.getEdgeWeight(this.grafo.getEdge(ultimo, b)) >= x) {
+				if(!parziale.contains(b))
+				parziale.add(b);
+				cerca(parziale, livello+1, arrivo, x);
+				parziale.remove(parziale.size()-1);
+			}
+		}
+		
+	}
+
+
+
+	public List<Business> getVertici() {
+		return this.vertici;
+	}
 }

@@ -5,6 +5,8 @@
 package it.polito.tdp.yelp;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.yelp.model.Business;
@@ -45,14 +47,41 @@ public class FXMLController {
     private ComboBox<Integer> cmbAnno; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbLocale"
-    private ComboBox<?> cmbLocale; // Value injected by FXMLLoader
+    private ComboBox<Business> cmbLocale; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
+    	txtResult.clear();
+    	Business partenza = cmbLocale.getValue();
+    	Business arrivo = this.model.getMigliore();
     	
+    	double soglia =0.0;
+    	try {
+    		soglia = Double.parseDouble(txtX.getText());
+    	}catch(NumberFormatException e) {
+    		txtResult.setText("ERRORE: Inserire un numero valido compreso tra 0 e 1!\n");
+    	}
+    	
+    	if(partenza == null) {
+    		txtResult.appendText("ERRORE: Selezionare prima un locale dal menu a tendina\n");
+    	}
+    	
+    	if(soglia < 0.0 || soglia > 1.0) {
+    		txtResult.appendText("ERRORE: Inserire un numero valido compreso tra 0 e 1!\n");
+    	}
+    	
+    	List<Business> percorsoMigliore = this.model.trovaPercorso(partenza, arrivo, soglia);
+    	if(percorsoMigliore == null) {
+    		txtResult.appendText("Non esiste un percorso migliore!\n");
+    	}else {
+    		   txtResult.appendText("Percorsio migliore:\n");
+    		   for(Business b: percorsoMigliore) {
+    			   txtResult.appendText(b.getBusinessName()+"\n");
+    		   }
+    	}
     }
 
     @FXML
@@ -83,6 +112,7 @@ public class FXMLController {
     	if(!model.grafoCreato()) {
     		txtResult.appendText("ERRORE: Crea prima il grafo!\n");
     	}
+    	cmbLocale.getItems().addAll(this.model.getVertici());
     	Business migliore = this.model.getMigliore();
     	txtResult.appendText("LOCALE MIGLIORE: " + migliore.getBusinessName());
     }
