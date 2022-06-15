@@ -7,6 +7,7 @@ package it.polito.tdp.yelp;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.yelp.model.Business;
 import it.polito.tdp.yelp.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -35,13 +36,13 @@ public class FXMLController {
     private Button btnPercorso; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbCitta"
-    private ComboBox<?> cmbCitta; // Value injected by FXMLLoader
+    private ComboBox<String> cmbCitta; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtX"
     private TextField txtX; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbAnno"
-    private ComboBox<?> cmbAnno; // Value injected by FXMLLoader
+    private ComboBox<Integer> cmbAnno; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbLocale"
     private ComboBox<?> cmbLocale; // Value injected by FXMLLoader
@@ -56,12 +57,34 @@ public class FXMLController {
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	txtResult.clear();
+    	String city = cmbCitta.getValue();
+    	if(city == null) {
+    		txtResult.appendText("ERRORE: Selezionare prima una città dal menu a tendina\n");
+    	}
+    	Integer anno = cmbAnno.getValue();
+    	if(anno == null) {
+    		txtResult.appendText("ERRORE: Selezionare prima un anno dal menu a tendina\n");
+    	}
+    	
+    	this.model.creaGrafo(city, anno);
+    	btnLocaleMigliore.setDisable(false);
+    	
+    	txtResult.appendText("Grafo creato!\n");
+    	txtResult.appendText("#VERTICI: "+ this.model.nVertici()+"\n");
+    	txtResult.appendText("#ARCHI: "+ this.model.nArchi());
+		
     }
 
     @FXML
     void doLocaleMigliore(ActionEvent event) {
 
+    	txtResult.clear();
+    	if(!model.grafoCreato()) {
+    		txtResult.appendText("ERRORE: Crea prima il grafo!\n");
+    	}
+    	Business migliore = this.model.getMigliore();
+    	txtResult.appendText("LOCALE MIGLIORE: " + migliore.getBusinessName());
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -78,5 +101,12 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	
+    	for(int year = 2005; year <= 2013; year++) {
+    		cmbAnno.getItems().add(year);
+    	}
+    	
+    	cmbCitta.getItems().addAll(this.model.getAllCities());
+    	btnLocaleMigliore.setDisable(true);
     }
 }
