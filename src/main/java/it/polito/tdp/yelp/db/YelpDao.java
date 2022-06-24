@@ -140,20 +140,24 @@ public class YelpDao {
 		}
 	}
 	
-	public void getVertici(String city, int year, Map<String, Business> idMap) {
-		String sql ="SELECT DISTINCT b.* "
+	public void getVertici(Integer year, String city, Map<String, Business> idMap) {
+		String sql = "SELECT DISTINCT b.* "
 				+ "FROM business b, reviews r "
-				+ "WHERE b.business_id = r.business_id  "
-				+ "AND b.city = ? AND YEAR(r.review_date) = ?";
+				+ "WHERE b.business_id = r.business_id "
+				+ "AND YEAR(r.review_date) = ? "
+				+ "AND b.city = ? "
+				+ "";
+		
 		Connection conn = DBConnect.getConnection();
 
 		try {
 			PreparedStatement st = conn.prepareStatement(sql);
-			st.setString(1, city);
-			st.setInt(2, year);
+			st.setInt(1, year);
+			st.setString(2, city);
 			ResultSet res = st.executeQuery();
 			while (res.next()) {
 				
+				if(!idMap.containsKey(res.getString("b.business_id"))) {
 					Business business = new Business(res.getString("business_id"), 
 							res.getString("full_address"),
 							res.getString("active"),
@@ -166,33 +170,27 @@ public class YelpDao {
 							res.getDouble("longitude"),
 							res.getString("state"),
 							res.getDouble("stars"));
-					
-		        if(!idMap.containsKey(res.getString("business_id"))) {
-					idMap.put(res.getString("business_id"), business);
+					idMap.put(res.getString("b.business_id"), business);
 				}
-
 			}
 			res.close();
 			st.close();
 			conn.close();
-			
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return;
 		}
-		
 	}
 	
-	public List<Adiacenza> getAdiacenze(String city, int year, Map<String, Business> idMap){
-		String sql ="SELECT b1.business_id AS id1, b2.business_id AS id2, AVG(r1.stars)- AVG(r2.stars) AS peso "
+	public List<Adiacenza> getAdiacenze(Integer year, String city, Map<String, Business> idMap){
+		String sql = "SELECT DISTINCT b1.business_id AS id1, b2.business_id AS id2, AVG(r1.stars)-AVG(r2.stars) AS peso "
 				+ "FROM business b1, business b2, reviews r1, reviews r2 "
-				+ "WHERE b1.business_id > b2.business_id "
-				+ "AND r1.business_id = b1.business_id AND r2.business_id = b2.business_id "
+				+ "WHERE b1.business_id < b2.business_id "
+				+ "AND b1.business_id = r1.business_id AND b2.business_id = r2.business_id "
 				+ "AND b1.city = b2.city AND b1.city = ? "
 				+ "AND YEAR(r1.review_date) = YEAR(r2.review_date) AND YEAR(r1.review_date) = ? "
-				+ "GROUP BY b1.business_id, b2.business_id "
-				+ "HAVING AVG(r1.stars)-AVG(r2.stars) != 0";
-		
+				+ "GROUP BY id1, id2 "
+				+ "HAVING peso != 0";
 		List<Adiacenza> result = new ArrayList<>();
 		Connection conn = DBConnect.getConnection();
 
@@ -202,15 +200,17 @@ public class YelpDao {
 			st.setInt(2, year);
 			ResultSet res = st.executeQuery();
 			while (res.next()) {
+
 				if(idMap.containsKey(res.getString("id1")) && idMap.containsKey(res.getString("id2"))) {
-				    Adiacenza a = new Adiacenza(idMap.get(res.getString("id1")), idMap.get(res.getString("id2")), res.getDouble("peso"));
-				    result.add(a);
+					Adiacenza a = new Adiacenza(idMap.get(res.getString("id1")), idMap.get(res.getString("id2")), res.getInt("peso"));
+					result.add(a);
 				}
 			}
 			res.close();
 			st.close();
 			conn.close();
 			return result;
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;

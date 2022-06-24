@@ -56,49 +56,43 @@ public class FXMLController {
     void doCalcolaPercorso(ActionEvent event) {
     	txtResult.clear();
     	Business partenza = cmbLocale.getValue();
-    	Business arrivo = this.model.getMigliore();
-    	
-    	double soglia =0.0;
+    	if(partenza == null) {
+    		txtResult.appendText("ERRORE: Selezionare un locale dal menu a tendina!\n");
+    	}
+    	Double soglia = 0.0;
     	try {
     		soglia = Double.parseDouble(txtX.getText());
     	}catch(NumberFormatException e) {
-    		txtResult.setText("ERRORE: Inserire un numero valido compreso tra 0 e 1!\n");
+    		txtResult.appendText("ERRORE: Inserire un valore di soglia compreso tra 0 e 1!\n");
+    		return;
     	}
-    	
-    	if(partenza == null) {
-    		txtResult.appendText("ERRORE: Selezionare prima un locale dal menu a tendina\n");
+    	if(soglia < 0 || soglia > 1) {
+    		txtResult.appendText("ERRORE: Inserire un valore di soglia compreso tra 0 e 1!\n");
+    		return;
     	}
+    	Business arrivo = this.model.getMigliore();
+    	List<Business> percorsoMigliore = new ArrayList<>(this.model.trovaPercorso(soglia, partenza, arrivo));
+    	txtResult.appendText("Percorso migliore:\n");
     	
-    	if(soglia < 0.0 || soglia > 1.0) {
-    		txtResult.appendText("ERRORE: Inserire un numero valido compreso tra 0 e 1!\n");
-    	}
-    	
-    	List<Business> percorsoMigliore = this.model.trovaPercorso(partenza, arrivo, soglia);
-    	if(percorsoMigliore == null) {
-    		txtResult.appendText("Non esiste un percorso migliore!\n");
-    	}else {
-    		   txtResult.appendText("Percorsio migliore:\n");
-    		   for(Business b: percorsoMigliore) {
-    			   txtResult.appendText(b.getBusinessName()+"\n");
+    	for(Business b: percorsoMigliore) {
+    		txtResult.appendText(b.getBusinessName()+"\n");
     		   }
-    	}
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-    	txtResult.clear();
-    	String city = cmbCitta.getValue();
-    	if(city == null) {
-    		txtResult.appendText("ERRORE: Selezionare prima una città dal menu a tendina\n");
-    	}
-    	Integer anno = cmbAnno.getValue();
-    	if(anno == null) {
-    		txtResult.appendText("ERRORE: Selezionare prima un anno dal menu a tendina\n");
-    	}
-    	
-    	this.model.creaGrafo(city, anno);
-    	btnLocaleMigliore.setDisable(false);
-    	
+        txtResult.clear();
+        String city = cmbCitta.getValue();
+        if(city == null) {
+        	txtResult.appendText("ERRORE: Selezionare una citta dal menu a tendina!\n");
+        }
+        Integer anno = cmbAnno.getValue();
+        if(anno == null) {
+        	txtResult.appendText("ERRORE: Selezionare un anno dal menu a tendina!\n");
+        }
+        this.model.creaGrafo(anno, city);
+        btnLocaleMigliore.setDisable(false);
+        cmbLocale.getItems().addAll(this.model.getVertici());
     	txtResult.appendText("Grafo creato!\n");
     	txtResult.appendText("#VERTICI: "+ this.model.nVertici()+"\n");
     	txtResult.appendText("#ARCHI: "+ this.model.nArchi());
@@ -109,12 +103,10 @@ public class FXMLController {
     void doLocaleMigliore(ActionEvent event) {
 
     	txtResult.clear();
-    	if(!model.grafoCreato()) {
-    		txtResult.appendText("ERRORE: Crea prima il grafo!\n");
-    	}
-    	cmbLocale.getItems().addAll(this.model.getVertici());
     	Business migliore = this.model.getMigliore();
-    	txtResult.appendText("LOCALE MIGLIORE: " + migliore.getBusinessName());
+    	btnPercorso.setDisable(false);
+    	txtResult.appendText("LOCALE MIGLIORE: " + migliore + "\n");
+    	
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -127,16 +119,18 @@ public class FXMLController {
         assert cmbAnno != null : "fx:id=\"cmbAnno\" was not injected: check your FXML file 'Scene.fxml'.";
         assert cmbLocale != null : "fx:id=\"cmbLocale\" was not injected: check your FXML file 'Scene.fxml'.";
         assert txtResult != null : "fx:id=\"txtResult\" was not injected: check your FXML file 'Scene.fxml'.";
+    
+        for(int year = 2005; year<=2013; year++) {
+        	cmbAnno.getItems().add(year);
+        }
     }
     
     public void setModel(Model model) {
     	this.model = model;
-    	
-    	for(int year = 2005; year <= 2013; year++) {
-    		cmbAnno.getItems().add(year);
-    	}
-    	
     	cmbCitta.getItems().addAll(this.model.getAllCities());
     	btnLocaleMigliore.setDisable(true);
+    	btnPercorso.setDisable(true);
+    	
+    
     }
 }

@@ -1,12 +1,11 @@
 package it.polito.tdp.yelp.model;
 
 public class Adiacenza {
-	
 	private Business b1;
 	private Business b2;
-	private double peso;
+	private int peso;
 	
-	public Adiacenza(Business b1, Business b2, double peso) {
+	public Adiacenza(Business b1, Business b2, int peso) {
 		super();
 		this.b1 = b1;
 		this.b2 = b2;
@@ -29,14 +28,13 @@ public class Adiacenza {
 		this.b2 = b2;
 	}
 
-	public double getPeso() {
+	public int getPeso() {
 		return peso;
 	}
 
-	public void setPeso(double peso) {
+	public void setPeso(int peso) {
 		this.peso = peso;
 	}
-	
 	
 
 }
